@@ -99,8 +99,8 @@ void toggle_address(ea_t ea) {
 
   if(!disabled_addrs.count(ea)) {
 	  disabled_addrs.insert(ea);
-	  int succ = prim_node->altset(ea,1);
-	  msg("Disabling address %a. Storage success: %d\n", ea, succ);
+	  prim_node->altset(ea,1);
+	  //msg("Disabling address %a.\n", ea);
   } else {
 	  disabled_addrs.erase(disabled_addrs.find(ea));
 	  prim_node->altdel(ea);
@@ -120,8 +120,8 @@ void toggle_segment(ea_t start, ea_t end) {
   for(ea_t ea = start; ea < end; ea = next_not_tail(ea)) {
 	if(!disabled_addrs.count(ea)) {
 		disabled_addrs.insert(ea);
-		int succ = prim_node->altset(ea, 1);
-		msg("Disabling address %a. Storage success: %d\n", ea, succ);
+		prim_node->altset(ea, 1);
+		//msg("Disabling address %a.\n", ea);
 
 		if(!bpt_set) {
 			add_bpt(ea);
