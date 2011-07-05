@@ -36,7 +36,9 @@ map<ea_t, ea_t> skip_cache;
 
 bgcolor_t disabled_col = 0x00222222;
 
-netnode prim_node("$ nopper nopped-addresses", 0, true);
+const char* node_name = "$ nopper addresses";
+
+netnode *prim_node = NULL;
 
 //--------------------------------------------------------------------------
 static int idaapi dbg_callback(void * /*user_data*/, int notification_code, va_list va)
@@ -72,7 +74,8 @@ static int idaapi dbg_callback(void * /*user_data*/, int notification_code, va_l
   return 0;
 }
 
-static int idaapi bgcol_callback(void * /*user_data*/, int notification_code, va_list va) {
+static int idaapi idp_callback(void * /*user_data*/, int notification_code, va_list va) {
+
 	if(notification_code == processor_t::get_bg_color) { 
 		ea_t addr = va_arg(va, ea_t);
 		bgcolor_t *col  = va_arg(va, bgcolor_t*);
@@ -84,8 +87,8 @@ static int idaapi bgcol_callback(void * /*user_data*/, int notification_code, va
 			return 1;
 		}
 	} else {
-		return 0;
-	}
+	  return 0;
+  }
 }
 
 void toggle_address(ea_t ea) {
@@ -96,11 +99,11 @@ void toggle_address(ea_t ea) {
 
   if(!disabled_addrs.count(ea)) {
 	  disabled_addrs.insert(ea);
-	  prim_node.altset(ea,1);
-	  //msg("Disabling address %a\n", ea);
+	  int succ = prim_node->altset(ea,1);
+	  msg("Disabling address %a. Storage success: %d\n", ea, succ);
   } else {
 	  disabled_addrs.erase(disabled_addrs.find(ea));
-	  prim_node.altdel(ea);
+	  prim_node->altdel(ea);
 	  //msg("Enabling address %a\n", ea);
   }
 }
@@ -117,8 +120,8 @@ void toggle_segment(ea_t start, ea_t end) {
   for(ea_t ea = start; ea < end; ea = next_not_tail(ea)) {
 	if(!disabled_addrs.count(ea)) {
 		disabled_addrs.insert(ea);
-		prim_node.altset(ea, 1);
-		//msg("Disabling address %a\n", ea);
+		int succ = prim_node->altset(ea, 1);
+		msg("Disabling address %a. Storage success: %d\n", ea, succ);
 
 		if(!bpt_set) {
 			add_bpt(ea);
@@ -127,7 +130,7 @@ void toggle_segment(ea_t start, ea_t end) {
 	} else {
 		del_bpt(ea);
 		bpt_set = false;
-		prim_node.altdel(ea);
+		prim_node->altdel(ea);
 		disabled_addrs.erase(disabled_addrs.find(ea));
 		//msg("Enabling address %a\n", ea);
 	}
@@ -151,16 +154,21 @@ void idaapi run(int /*arg*/)
 //--------------------------------------------------------------------------
 int idaapi init(void)
 {
-  if(!hook_to_notification_point(HT_DBG, dbg_callback, NULL))
-    return PLUGIN_SKIP;
-
-  if(!hook_to_notification_point(HT_IDP, bgcol_callback, NULL)) {
-	unhook_from_notification_point(HT_DBG, dbg_callback, NULL);
-    return PLUGIN_SKIP;
+  if(!hook_to_notification_point(HT_DBG, dbg_callback, NULL)) {
+	  msg("Nopper failed to hook to debugger; plugin not loaded.");
+	  return PLUGIN_SKIP;
   }
 
-  for(nodeidx_t idx = prim_node.alt1st(); idx != BADNODE; idx = prim_node.altnxt(idx)) {
-	disabled_addrs.insert(idx);
+  if(!hook_to_notification_point(HT_IDP, idp_callback, NULL)) {
+	unhook_from_notification_point(HT_DBG, dbg_callback, NULL);
+	msg("Nopper failed to hook to IDA events; plugin not loaded.");
+    return PLUGIN_SKIP;
+  }
+  
+  prim_node = new netnode(node_name, 0, true);
+		
+  for(nodeidx_t idx = prim_node->alt1st(); idx != BADNODE; idx = prim_node->altnxt(idx)) {
+	  disabled_addrs.insert(idx);
   }
 
   return PLUGIN_KEEP;
@@ -171,7 +179,7 @@ void idaapi term(void)
 {
   // just to be safe
   unhook_from_notification_point(HT_DBG, dbg_callback, NULL);
-  unhook_from_notification_point(HT_IDP, bgcol_callback, NULL);
+  unhook_from_notification_point(HT_IDP, idp_callback, NULL);
   disabled_addrs.clear();
 }
 
@@ -188,7 +196,7 @@ char wanted_hotkey[] = "Alt+F2";
 plugin_t PLUGIN =
 {
   IDP_INTERFACE_VERSION,
-  PLUGIN_DRAW | PLUGIN_FIX, // plugin flags
+  PLUGIN_DRAW | PLUGIN_PROC, // plugin flags
   init,                 // initialize
 
   term,                 // terminate. this pointer may be NULL.
