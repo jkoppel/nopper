@@ -4,7 +4,7 @@ When you have the source code, you comment lines out. With binaries, you replace
 
 You can't patch a file from IDA, but with Nopper, you can simulate the effect.
 
-*This project has been succeeded*
+**This project has been succeeded**
 
 REProgram operates by patching the process after it has been loaded, contains a superset of the functionality of Nopper, and is far faster. It is available from http://www.hex-rays.com/contest2011/reprogram.zip .
 
