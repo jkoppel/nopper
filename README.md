@@ -13,11 +13,15 @@ After installation, highlight the region of code you wish to disable, and then r
 
 You can reenable the code in the exact same way.
 
-Tips & Tricks
+# Tips & Tricks
+
 Minimize IDA after running your program, or else focus will return to IDA every time a nopped section is hit.
 Nopper works by marking a region as disabled, setting a breakpoint at the start of the region, and jumping to the end whenever the breakpoint is hit. By toggling only the breakpoint, you can easily reenable and redisable an entire section.
+
 Nopper is fast, but there is still overhead involved in using breakpoints. If you want to disable an instruction which is invoked thousands of times a second, you are best off actually patching the binary.
-Example
+
+# Example
+
 Normal execution of the program:
 
 
