@@ -24,11 +24,12 @@ Nopper is fast, but there is still overhead involved in using breakpoints. If yo
 
 Normal execution of the program:
 
-
+![Normal execution](/img/normal_exec.jpg?raw=true)
 
 Disabling a function with Nopper:
 
-
+![Disabling](/img/nopping_out.jpg?raw=true)
 
 Execution of the program with that function disabled:
 
+![Nopped execution](/img/nopped_exec.jpg?raw=true)
